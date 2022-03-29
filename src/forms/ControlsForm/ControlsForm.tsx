@@ -5,7 +5,7 @@ import Slider from '../../components/Slider/Slider';
 import { SettingsFormProps } from './typings';
 import { SettingsFormValuesProps } from '../../helpers/typings';
 
-const SettingsForm = ({ onSubmit }: SettingsFormProps) => {
+const ControlsForm = ({ initialValues, onSubmit }: SettingsFormProps) => {
   const {
     getInputProps,
     reset,
@@ -18,16 +18,7 @@ const SettingsForm = ({ onSubmit }: SettingsFormProps) => {
       platePadding,
       detectDelay
     }
-  } = useForm<SettingsFormValuesProps>({
-    initialValues: {
-      contrast: 130,
-      minContrast: 120,
-      maxContrast: 140,
-      blur: 1,
-      platePadding: 0,
-      detectDelay: 3
-    }
-  });
+  } = useForm<SettingsFormValuesProps>({ initialValues });
 
   useEffect(() => {
     onSubmit(values);
@@ -36,7 +27,7 @@ const SettingsForm = ({ onSubmit }: SettingsFormProps) => {
   return (
     <form>
       <InputWrapper label="Contrast" description={contrast || '0'}>
-        <Slider min={0} max={200} disabled {...getInputProps('contrast')} />
+        <Slider min={0} max={200} {...getInputProps('contrast')} />
       </InputWrapper>
       <InputWrapper label="Min contrast" description={minContrast || '0'}>
         <Slider min={0} max={200} {...getInputProps('minContrast')} />
@@ -55,11 +46,11 @@ const SettingsForm = ({ onSubmit }: SettingsFormProps) => {
       </InputWrapper>
       <Group position="center" mt="xl">
         <Button compact variant="default" onClick={reset}>
-          Set to default
+          Reset
         </Button>
       </Group>
     </form>
   );
 };
 
-export default SettingsForm;
+export default ControlsForm;

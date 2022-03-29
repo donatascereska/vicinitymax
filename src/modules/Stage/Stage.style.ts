@@ -2,6 +2,7 @@ import { createStyles } from '@mantine/core';
 
 export default createStyles(() => ({
   container: {
+    position: 'relative',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
@@ -13,5 +14,9 @@ export default createStyles(() => ({
   canvasOriginal: { display: 'none' },
   canvasBW: {},
   canvasFilled: {},
-  canvasPlate: { display: 'none' }
+  canvasPlate: {
+    position: 'absolute',
+    top: '5rem',
+    right: '5rem'
+  }
 }));

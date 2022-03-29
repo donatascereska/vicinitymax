@@ -1,10 +1,9 @@
 import { useRef, useState, useEffect } from 'react';
-import { useInterval } from '@mantine/hooks';
 import { StageProps } from './typings';
 import { detectObject } from '../../helpers/utils';
 import useStyles from './Stage.style';
 
-function Stage({ settings }: StageProps) {
+function Stage({ settings, controls }: StageProps) {
   const { classes } = useStyles();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasOriginalRef = useRef<HTMLCanvasElement>(null);
@@ -20,82 +19,14 @@ function Stage({ settings }: StageProps) {
     useState<CanvasRenderingContext2D | null>(null);
   const [contextPlate, setContextPlate] =
     useState<CanvasRenderingContext2D | null>(null);
+  const [isCameraReady, setIsCameraReady] = useState<boolean>(false);
+  const [timer, setTimer] = useState<any>();
   const video = videoRef.current;
   const canvasOriginal = canvasOriginalRef.current;
   const canvasBW = canvasBWRef.current;
   const canvasFilled = canvasFilledRef.current;
   const canvasPlate = canvasPlateRef.current;
-
-  const { canvasW, canvasH, videoW, videoH } = settings;
-
-  const processFrame = () => {
-    if (
-      video &&
-      canvasOriginal &&
-      contextOriginal &&
-      canvasBW &&
-      contextBW &&
-      canvasFilled &&
-      contextFilled
-    ) {
-      canvasOriginal.width = canvasW;
-      canvasOriginal.height = canvasH;
-      canvasBW.width = canvasW;
-      canvasBW.height = canvasH;
-      canvasFilled.width = canvasW;
-      canvasFilled.height = canvasH;
-      const diffW = (videoW - canvasW) / 2;
-      const diffH = (videoH - canvasH) / 2;
-      contextOriginal.drawImage(
-        video,
-        diffW,
-        diffH,
-        canvasW,
-        canvasH,
-        0,
-        0,
-        canvasW,
-        canvasH
-      );
-      contextBW.filter = `blur(${blur}px) grayscale(100%)`;
-      contextBW.drawImage(
-        video,
-        diffW,
-        diffH,
-        canvasW,
-        canvasH,
-        0,
-        0,
-        canvasW,
-        canvasH
-      );
-
-      contextFilled.drawImage(
-        video,
-        diffW,
-        diffH,
-        canvasW,
-        canvasH,
-        0,
-        0,
-        canvasW,
-        canvasH
-      );
-
-      detectObject({
-        settings,
-        canvasOriginal,
-        contextOriginal,
-        contextBW,
-        canvasFilled,
-        contextFilled,
-        canvasPlate,
-        contextPlate
-      });
-    }
-  };
-
-  const interval = useInterval(processFrame, 0);
+  const { videoW, videoH } = settings;
 
   const openCamera = () => {
     if ('mediaDevices' in navigator) {
@@ -111,7 +42,7 @@ function Stage({ settings }: StageProps) {
           if (video) {
             video.addEventListener('loadeddata', () => {
               video.play();
-              interval.start();
+              setIsCameraReady(true);
             });
             video.srcObject = mediaStream;
           }
@@ -119,20 +50,58 @@ function Stage({ settings }: StageProps) {
     }
   };
 
-  useEffect(() => {
-    interval.stop();
-    console.log('STOP');
-    setTimeout(() => {
-      console.log('PLAY');
-      interval.start();
-    }, 3000);
-  }, [settings]);
+  const processFrame = () => {
+    if (
+      video &&
+      canvasOriginal &&
+      contextOriginal &&
+      canvasBW &&
+      contextBW &&
+      canvasFilled &&
+      contextFilled
+    ) {
+      // detectObject({
+      //   video,
+      //   settings,
+      //   controls,
+      //   canvasBW,
+      //   canvasOriginal,
+      //   contextOriginal,
+      //   contextBW,
+      //   canvasFilled,
+      //   contextFilled,
+      //   canvasPlate,
+      //   contextPlate
+      // });
+    }
+  };
+
+  const start = () => {
+    const timer = setInterval(processFrame, 0);
+    setTimer(timer);
+  };
+
+  const stop = () => {
+    clearInterval(timer);
+    setTimer(null);
+  };
 
   useEffect(() => {
-    if (!interval.active) {
-      //interval.start();
+    return () => {
+      stop();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isCameraReady) {
+      start();
     }
-  }, [interval.active]);
+  }, [isCameraReady]);
+
+  useEffect(() => {
+    stop();
+    start();
+  }, [controls.contrast]);
 
   useEffect(() => {
     if (canvasOriginal && canvasBW && canvasFilled && canvasPlate) {
@@ -166,7 +135,6 @@ function Stage({ settings }: StageProps) {
         ref={canvasFilledRef}
         id="canvas-filled"
         className={classes.canvasFilled}
-        style={{ width: canvasW, height: canvasH }}
       />
       <canvas
         ref={canvasPlateRef}
